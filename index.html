@@ -1,171 +1,653 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Sachi’s Fund Flow Sheet</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sachi's Fund Flow Sheet — Dashboard</title>
+  <meta name="description" content="Responsive dashboard wrapper for Google Sheets iframe with dark/light mode, parallax hero, mobile-first full-screen iframe and professional features." />
 
-  <!-- Apple-like system font -->
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Anton&display=swap" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.4/css/boxicons.min.css" integrity="sha512-r8cL0q3w3g6n0X8JrM0V9kq0b2wqZkYzG3S2sD6Yw3Xk8j6p0f6D2G1r3p7s1k2x4cYV5v8cQ9vQ9d3w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    :root {
-      --bg: #f5f5f7;
-      --text: #111;
-      --muted: #6e6e73;
+    /* --------------------------------------------------
+       Basic Resets & Variables
+       -------------------------------------------------- */
+    :root{
+      --bg: #0f1724;
+      --card: #0b1220;
+      --muted: #9aa4b2;
+      --accent: #0ea5a4;
+      --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.03);
+      --text: #e6eef6;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --shadow: 0 8px 30px rgba(2,6,23,0.6);
+      --glass-border: rgba(255,255,255,0.04);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+
+    [data-theme="light"]{
+      --bg: #f7fafc;
       --card: #ffffff;
-      --radius: 18px;
-      --shadow: 0 20px 40px rgba(0,0,0,0.08);
+      --muted: #64748b;
+      --accent: #0ea5a4;
+      --glass: rgba(14,165,164,0.03);
+      --glass-2: rgba(2,6,23,0.03);
+      --text: #0b1220;
+      --shadow: 0 10px 30px rgba(2,6,23,0.06);
+      --glass-border: rgba(2,6,23,0.06);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-                   Roboto, Helvetica, Arial, sans-serif;
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body,#app{height:100%}
+    body{background:linear-gradient(180deg,var(--bg), #071029);color:var(--text);-webkit-font-smoothing:antialiased}
+
+    /* --------------------------------------------------
+       Layout
+       -------------------------------------------------- */
+    .container{max-width:1200px;margin:0 auto;padding:20px}
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-radius:12px;background:linear-gradient(180deg,transparent,rgba(0,0,0,0.02));backdrop-filter:blur(6px);box-shadow:var(--shadow);border:1px solid var(--glass-border)}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#ffffff10,#ffffff04);display:flex;align-items:center;justify-content:center;font-weight:800;font-family:Anton, sans-serif}
+    .brand h1{font-size:18px;letter-spacing:0.3px}
+    .brand p{font-size:12px;color:var(--muted)}
+
+    nav{display:flex;align-items:center;gap:10px}
+    .btn{background:var(--card);color:var(--text);padding:8px 12px;border-radius:10px;border:1px solid var(--glass-border);display:inline-flex;gap:8px;align-items:center;cursor:pointer}
+    .icon{font-size:18px}
+
+    /* --------------------------------------------------
+       Grid
+       -------------------------------------------------- */
+    .main-grid{display:grid;grid-template-columns:300px 1fr;gap:18px;margin-top:20px}
+
+    /* Sidebar */
+    .sidebar{background:linear-gradient(180deg,var(--card),var(--glass));padding:16px;border-radius:12px;border:1px solid var(--glass-border);height:calc(100vh - 140px);overflow:auto}
+    .sidebar .section{margin-bottom:16px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;color:var(--muted);cursor:pointer}
+    .nav-item.active{background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));color:var(--text)}
+
+    /* Dashboard area */
+    .content{min-height:70vh}
+    .card{background:linear-gradient(180deg,var(--card),var(--glass));padding:16px;border-radius:12px;border:1px solid var(--glass-border);box-shadow:var(--shadow)}
+
+    /* Hero / Parallax */
+    .hero{position:relative;border-radius:12px;overflow:hidden;margin-bottom:18px}
+    .hero .parallax-bg{position:absolute;inset:0;background-image:linear-gradient(120deg, rgba(14,165,164,0.06), rgba(78,70,229,0.04)), url('https://images.unsplash.com/photo-1520975911034-0f1046b375d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');background-size:cover;background-position:center;transform:translateZ(0);will-change:transform}
+    .hero .overlay{position:relative;padding:36px;display:flex;align-items:center;gap:18px}
+    .hero h2{font-size:26px;font-weight:700}
+    .hero p{color:var(--muted);margin-top:6px}
+
+    /* iframe area - responsive and full screen on mobile */
+    .sheet-wrap{height:520px;border-radius:10px;overflow:hidden;border:1px solid var(--glass-border)}
+    .sheet-iframe{width:100%;height:100%;border:0;display:block}
+
+    /* Mobile fullscreen mode for iframe */
+    .mobile-full{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column}
+    .mobile-full .mobile-toolbar{padding:12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-border)}
+    .mobile-full .sheet-iframe{flex:1}
+
+    /* Table styles */
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    thead th{font-weight:600;text-align:left;padding:10px 8px;color:var(--muted)}
+    tbody td{padding:10px 8px;border-top:1px dashed var(--glass-border)}
+
+    /* Small utilities */
+    .muted{color:var(--muted)}
+    .chip{display:inline-flex;padding:6px 8px;border-radius:999px;font-size:12px;border:1px solid var(--glass-border)}
+    .flex{display:flex;align-items:center;gap:10px}
+    .right{text-align:right}
+
+    /* Responsive */
+    @media (max-width:900px){
+      .main-grid{grid-template-columns:1fr;}
+      .sidebar{height:auto;order:2}
+      .content{order:1}
+      .sheet-wrap{height:calc(100vh - 180px)}
     }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-    }
+    /* Fancy footer */
+    footer{margin-top:24px;padding:16px;border-radius:12px;background:transparent;color:var(--muted);font-size:13px;text-align:center}
 
-    /* ---------- HERO WITH PARALLAX ---------- */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      background: linear-gradient(
-        180deg,
-        #ffffff 0%,
-        #f5f5f7 100%
-      );
-      background-attachment: fixed;
-    }
+    /* Small animations */
+    .fade-up{transform:translateY(8px);opacity:0;animation:fadeUp .6s ease forwards}
+    @keyframes fadeUp{to{transform:none;opacity:1}}
 
-    .hero h1 {
-      font-size: clamp(2.5rem, 6vw, 4.5rem);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-    }
+    /* Form inputs */
+    input,select,textarea{background:transparent;border:1px solid var(--glass-border);padding:8px;border-radius:8px;color:var(--text)}
 
-    .hero p {
-      margin-top: 16px;
-      font-size: 1.2rem;
-      color: var(--muted);
-      max-width: 680px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    /* ---------- SECTION ---------- */
-    section {
-      padding: 80px 20px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1200px;
-    }
-
-    .section-title {
-      font-size: 2rem;
-      margin-bottom: 14px;
-      letter-spacing: -0.02em;
-    }
-
-    .section-sub {
-      color: var(--muted);
-      max-width: 720px;
-      margin-bottom: 40px;
-    }
-
-    /* ---------- CARD ---------- */
-    .card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 24px;
-      overflow: hidden;
-    }
-
-    .embed-wrap {
-      position: relative;
-      width: 100%;
-      padding-bottom: 70%;
-      height: 0;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .embed-wrap iframe {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
-    /* ---------- FOOTER ---------- */
-    footer {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    /* ---------- SMALL PARALLAX TEXT ---------- */
-    .parallax-text {
-      background: linear-gradient(90deg, #000, #555);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-attachment: fixed;
-    }
   </style>
 </head>
+<body id="app" data-theme="dark">
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">SF</div>
+        <div>
+          <h1>Sachi's Fund Flow Sheet</h1>
+          <p class="muted">Weekly Invest Tracker • Mobile-friendly • Embed</p>
+        </div>
+      </div>
 
-<body>
+      <nav>
+        <button class="btn" id="toggleTheme"><i class='bx bx-moon icon'></i><span class="muted">Dark</span></button>
+        <button class="btn" id="openMobileIframe"><i class='bx bx-phone icon'></i><span class="muted">Mobile View</span></button>
+        <div class="btn" id="exportCSV"><i class='bx bx-file icon'></i><span class="muted">Export CSV</span></div>
+        <div class="btn" id="downloadSnapshot"><i class='bx bx-camera icon'></i><span class="muted">Snapshot</span></div>
+      </nav>
+    </header>
 
-  <!-- HERO -->
-  <div class="hero">
-    <div>
-      <h1 class="parallax-text">Sachi’s Fund Flow Sheet</h1>
-      <p>
-        A transparent, structured, and disciplined view of weekly investments,
-        extra contributions, expenditure tracking, and cumulative growth.
-      </p>
+    <div class="main-grid">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="section">
+          <div class="nav-item active"><i class='bx bx-home' ></i> Dashboard</div>
+          <div class="nav-item"><i class='bx bx-spreadsheet' ></i> Sheet Embed</div>
+          <div class="nav-item"><i class='bx bx-chart' ></i> Reports</div>
+          <div class="nav-item"><i class='bx bx-wallet' ></i> Cash / Cashless</div>
+          <div class="nav-item"><i class='bx bx-calendar' ></i> Overdue</div>
+        </div>
+
+        <div class="section">
+          <h4 style="margin-bottom:8px">Quick Stats</h4>
+          <div style="display:flex;gap:8px;flex-direction:column">
+            <div class="card" style="padding:12px;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="muted">Total Contributions</div>
+                <div style="font-weight:700;font-size:18px">₹ <span id="statTotal">0</span></div>
+              </div>
+              <div class="chip">Weeks: <strong id="statWeeks">0</strong></div>
+            </div>
+
+            <div class="card" style="padding:12px;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="muted">Extra Invest</div>
+                <div style="font-weight:700;font-size:18px">₹ <span id="statExtra">0</span></div>
+              </div>
+              <div class="chip" id="lastPay">Last: —</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h4 style="margin-bottom:8px">Shortcuts</h4>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn" id="addRowBtn"><i class='bx bx-plus icon'></i>Add Week</button>
+            <button class="btn" id="markDone"><i class='bx bx-check icon'></i>Mark Due Paid</button>
+            <button class="btn" id="clearData"><i class='bx bx-trash icon'></i>Clear Sample Data</button>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Content -->
+      <main class="content">
+        <section class="hero card fade-up">
+          <div class="parallax-bg" id="parallax"></div>
+          <div class="overlay">
+            <div style="flex:1">
+              <h2>Sachi's Fund Flow — Dashboard</h2>
+              <p class="muted">Embed your Google Sheet below. Mobile full-screen enabled. This dashboard provides charts, quick stats, and a transactional table for tracking weekly investments (cash/cashless), extras, remarks and expenditures.</p>
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <div class="btn" id="goToSheet">Open Sheet</div>
+                <div class="btn" id="toggleIframeFit">Toggle Fullscreen (Desktop)</div>
+              </div>
+            </div>
+            <div style="width:280px">
+              <div class="card" style="padding:12px">
+                <div class="muted">Sample KPI</div>
+                <div style="font-size:22px;font-weight:800;margin-top:6px">₹ <span id="kpiTotal">0</span></div>
+                <div class="muted" style="margin-top:6px">Cumulative investment</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section style="display:grid;grid-template-columns:1fr 420px;gap:16px">
+          <div>
+            <div class="card sheet-wrap" id="sheetCard">
+              <!-- Responsive iframe embed (user-provided link) -->
+              <iframe class="sheet-iframe" id="sheetIframe" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSnlH6_EOPDSxIIol1FQbJOqvAVxufV7QxwdI4Uuh4NkpOs0BR57-_sfwSMr6Nm7-DfnxmB2TytgkuO/pubhtml?widget=true&amp;headers=false" title="Fund Flow Sheet"></iframe>
+            </div>
+
+            <div class="card" style="margin-top:12px">
+              <h3 style="margin-bottom:12px">Transactions</h3>
+              <div style="overflow:auto;max-height:320px">
+                <table id="txnTable">
+                  <thead>
+                    <tr>
+                      <th>Week</th>
+                      <th>Date</th>
+                      <th>Weekly Invest (₹)</th>
+                      <th>Payment Mode</th>
+                      <th>Extra Invest (₹)</th>
+                      <th>Extra Mode</th>
+                      <th>Total</th>
+                      <th>Cumulative</th>
+                      <th>Remarks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- rows injected by JS -->
+                  </tbody>
+                </table>
+              </div>
+
+              <div style="display:flex;justify-content:space-between;margin-top:10px;align-items:center">
+                <div class="muted">* Add expenditures and mark cash/cashless per row</div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn" id="addSample">Add Sample Data</button>
+                  <button class="btn" id="recalc">Recalculate</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <aside>
+            <div class="card">
+              <h4>Charts</h4>
+              <canvas id="chartInvest" style="width:100%;height:220px;margin-top:8px"></canvas>
+            </div>
+
+            <div class="card" style="margin-top:12px">
+              <h4>Expenditure Notes</h4>
+              <ul id="expNotes" style="margin-top:8px;list-style:none;padding-left:0">
+                <!-- notes injected by JS -->
+              </ul>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <input id="noteInput" placeholder="Add note (e.g., grocery ₹200)" />
+                <button class="btn" id="addNote">Add</button>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:12px">
+              <h4>Settings</h4>
+              <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+                <label class="muted">Default Weekly Amount</label>
+                <input id="defaultAmt" value="500" />
+
+                <label class="muted">Week Start</label>
+                <select id="weekStart"><option>Mon</option><option>Sun</option></select>
+
+                <label class="muted">Show Overdue</label>
+                <select id="showOverdue"><option>Yes</option><option>No</option></select>
+
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button class="btn" id="saveSettings">Save</button>
+                  <button class="btn" id="resetSettings">Reset</button>
+                </div>
+              </div>
+            </div>
+
+          </aside>
+        </section>
+
+        <section style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="card">
+            <h4>Cash vs Cashless</h4>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <div style="flex:1">
+                <div class="muted">Cash Total</div>
+                <div style="font-size:20px;font-weight:700">₹ <span id="cashTotal">0</span></div>
+              </div>
+              <div style="flex:1">
+                <div class="muted">Cashless Total</div>
+                <div style="font-size:20px;font-weight:700">₹ <span id="cashlessTotal">0</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>Overdue</h4>
+            <div id="overdueList" style="margin-top:10px"></div>
+          </div>
+        </section>
+
+        <footer>
+          Built for you — Student: Master of Computer Applications. Responsive embed, exports, and quick analytics. © Sachi
+        </footer>
+
+      </main>
     </div>
   </div>
 
-  <!-- SHEET SECTION -->
-  <section>
-    <div class="container">
-      <h2 class="section-title">Live Investment Ledger</h2>
-      <p class="section-sub">
-        This sheet updates in real time and shows weekly inflows, expenses, and
-        cumulative investment balance.
-      </p>
-
-      <div class="card">
-        <div class="embed-wrap">
-          <iframe
-            src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSnlH6_EOPDSxIIol1FQbJOqvAVxufV7QxwdI4Uuh4NkpOs0BR57-_sfwSMr6Nm7-DfnxmB2TytgkuO/pubhtml?widget=true&amp;headers=false"
-            loading="lazy"
-            title="Sachi's Fund Flow Sheet">
-          </iframe>
-        </div>
+  <!-- Mobile fullscreen iframe container (hidden by default) -->
+  <div id="mobileFull" class="mobile-full" style="display:none">
+    <div class="mobile-toolbar">
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn" id="closeMobile"><i class='bx bx-left-arrow icon'></i></button>
+        <div class="muted">Mobile Sheet View</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="mobileOpenInNew">Open in New Tab</button>
+        <button class="btn" id="mobileToggleTheme">Theme</button>
       </div>
     </div>
-  </section>
+    <iframe class="sheet-iframe" id="mobileIframe" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSnlH6_EOPDSxIIol1FQbJOqvAVxufV7QxwdI4Uuh4NkpOs0BR57-_sfwSMr6Nm7-DfnxmB2TytgkuO/pubhtml?widget=true&amp;headers=false" title="Fund Flow Mobile"></iframe>
+  </div>
 
-  <!-- FOOTER -->
-  <footer>
-    © 2025 · Fund Flow Sheet · Designed with clarity and purpose
-  </footer>
 
+  <script>
+    // ------------------------
+    // Sample data & helpers
+    // ------------------------
+    const SAMPLE = [
+      {week:1,date:'2024-12-07',weekly:500,mode:'Cash',extra:0,extraMode:'',remarks:''},
+      {week:2,date:'2024-12-14',weekly:500,mode:'GPay',extra:200,extraMode:'GPay',remarks:'Grocery'},
+      {week:3,date:'2024-12-21',weekly:500,mode:'Cash',extra:0,extraMode:'',remarks:''},
+      {week:4,date:'2024-12-28',weekly:500,mode:'GPay',extra:100,extraMode:'Cash',remarks:'Movie'},
+      {week:5,date:'2025-01-04',weekly:500,mode:'Cash',extra:0,extraMode:'',remarks:''},
+      {week:6,date:'2025-01-11',weekly:500,mode:'GPay',extra:0,extraMode:'',remarks:''}
+    ];
+
+    let rows = [];
+
+    function formatINR(n){return Number(n).toLocaleString('en-IN')}
+
+    // ------------------------
+    // Render table and stats
+    // ------------------------
+    function renderTable(){
+      const tbody = document.querySelector('#txnTable tbody');
+      tbody.innerHTML='';
+      let cumulative = 0;
+      let cashTotal = 0, cashlessTotal = 0, extraTotal = 0;
+
+      rows.forEach((r, idx) => {
+        const total = Number(r.weekly||0) + Number(r.extra||0);
+        cumulative += total;
+        extraTotal += Number(r.extra||0);
+        if((r.mode||'').toLowerCase().includes('cash')) cashTotal += Number(r.weekly||0);
+        else cashlessTotal += Number(r.weekly||0);
+        if((r.extraMode||'').toLowerCase().includes('cash')) cashTotal += Number(r.extra||0);
+        else if(r.extraMode) cashlessTotal += Number(r.extra||0);
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.week}</td>
+          <td>${r.date}</td>
+          <td contenteditable="true" data-field="weekly">${r.weekly}</td>
+          <td>${r.mode || ''}</td>
+          <td contenteditable="true" data-field="extra">${r.extra}</td>
+          <td>${r.extraMode || ''}</td>
+          <td>₹ ${formatINR(total)}</td>
+          <td>₹ ${formatINR(cumulative)}</td>
+          <td contenteditable="true" data-field="remarks">${r.remarks || ''}</td>
+        `;
+
+        // attach listeners for editable cells
+        tr.querySelectorAll('[contenteditable]').forEach(cell => {
+          cell.addEventListener('input', e => {
+            const field = cell.dataset.field;
+            rows[idx][field] = cell.innerText.trim() || 0;
+            // prevent circular formulas like =SUM(C3,E3)-I2 by using only numeric calc here
+            recalc();
+          })
+        })
+
+        tbody.appendChild(tr);
+      })
+
+      document.getElementById('statTotal').innerText = formatINR(cumulative);
+      document.getElementById('statExtra').innerText = formatINR(extraTotal);
+      document.getElementById('kpiTotal').innerText = formatINR(cumulative);
+      document.getElementById('cashTotal').innerText = formatINR(cashTotal);
+      document.getElementById('cashlessTotal').innerText = formatINR(cashlessTotal);
+      document.getElementById('statWeeks').innerText = rows.length;
+
+      updateChart();
+      renderOverdue();
+    }
+
+    function recalc(){
+      // ensure numeric types
+      rows = rows.map(r => ({...r, weekly: Number(r.weekly||0), extra: Number(r.extra||0)}));
+      renderTable();
+    }
+
+    // ------------------------
+    // Chart
+    // ------------------------
+    let chartInstance = null;
+    function updateChart(){
+      const labels = rows.map(r => 'W'+r.week);
+      const data = rows.map(r => Number(r.weekly||0) + Number(r.extra||0));
+      const ctx = document.getElementById('chartInvest');
+      if(chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type:'line',
+        data:{labels, datasets:[{label:'Weekly Total (₹)',data,fill:true,tension:0.2}]},
+        options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}
+      });
+    }
+
+    // ------------------------
+    // Overdue detection (simple) — shows weeks with 0 payment
+    // ------------------------
+    function renderOverdue(){
+      const el = document.getElementById('overdueList');
+      el.innerHTML='';
+      const overdue = rows.filter(r=> (Number(r.weekly||0) + Number(r.extra||0)) === 0);
+      if(overdue.length===0){el.innerHTML='<div class="muted">No overdue items.</div>';return}
+      overdue.forEach(o=>{
+        const d = document.createElement('div');
+        d.innerHTML = `<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px dashed var(--glass-border)"><div>Week ${o.week} — ${o.date}</div><div class="muted">₹ ${formatINR(Number(o.weekly||0)+Number(o.extra||0))}</div></div>`;
+        el.appendChild(d);
+      })
+    }
+
+    // ------------------------
+    // Expenditure notes
+    // ------------------------
+    function renderNotes(){
+      const ul = document.getElementById('expNotes');
+      ul.innerHTML = '';
+      const notes = JSON.parse(localStorage.getItem('sf_notes')||'[]');
+      notes.forEach(n=>{
+        const li = document.createElement('li');
+        li.style.padding='8px 0';
+        li.innerHTML = `<div style="display:flex;justify-content:space-between;gap:8px"><div>${n}</div><div><button class='btn' onclick='removeNote(\"${encodeURIComponent(n)}\")'>Remove</button></div></div>`;
+        ul.appendChild(li);
+      })
+    }
+    function addNote(){
+      const v = document.getElementById('noteInput').value.trim();
+      if(!v) return;
+      const notes = JSON.parse(localStorage.getItem('sf_notes')||'[]');
+      notes.unshift(v);
+      localStorage.setItem('sf_notes', JSON.stringify(notes.slice(0,30)));
+      document.getElementById('noteInput').value='';
+      renderNotes();
+    }
+    function removeNote(enc){
+      const v = decodeURIComponent(enc);
+      let notes = JSON.parse(localStorage.getItem('sf_notes')||'[]');
+      notes = notes.filter(n=>n!==v);
+      localStorage.setItem('sf_notes', JSON.stringify(notes));
+      renderNotes();
+    }
+
+    // ------------------------
+    // Add / Sample data
+    // ------------------------
+    document.getElementById('addSample').addEventListener('click', ()=>{
+      rows = [...rows, ...SAMPLE.map(s=>({...s, week: rows.length + s.week}))];
+      recalc();
+    })
+
+    document.getElementById('addRowBtn').addEventListener('click', ()=>{
+      const next = rows.length + 1;
+      const date = new Date();
+      const iso = date.toISOString().slice(0,10);
+      rows.push({week:next,date:iso,weekly:Number(document.getElementById('defaultAmt').value||500),mode:'Cash',extra:0,extraMode:'',remarks:''});
+      recalc();
+    })
+
+    document.getElementById('clearData').addEventListener('click', ()=>{
+      if(!confirm('Clear local sample data?')) return;
+      rows = []; localStorage.removeItem('sf_rows'); recalc();
+    })
+
+    document.getElementById('recalc').addEventListener('click', ()=>{recalc();saveLocal();})
+
+    // ------------------------
+    // Export CSV
+    // ------------------------
+    document.getElementById('exportCSV').addEventListener('click', ()=>{
+      const headers = ['Week','Date','Weekly Invest (₹)','Payment Mode','Extra Invest (₹)','Extra Mode','Total','Cumulative','Remarks'];
+      let csv = headers.join(',') + '\n';
+      let cumulative = 0;
+      rows.forEach(r=>{
+        const total = Number(r.weekly||0) + Number(r.extra||0);
+        cumulative += total;
+        csv += [r.week,r.date,r.weekly,r.mode,r.extra,r.extraMode,total,cumulative,`"${(r.remarks||'')}"`].join(',') + '\n';
+      })
+      const blob = new Blob([csv],{type:'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'sachi-fundflow.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    })
+
+    // ------------------------
+    // Snapshot (simple) — capture KPI area as PNG (uses html2canvas if available)
+    // ------------------------
+    document.getElementById('downloadSnapshot').addEventListener('click', async ()=>{
+      alert('Snapshot: This demo uses the browser print/save as PDF. For image snapshots use html2canvas or server-side capture.');
+      window.print();
+    })
+
+    // ------------------------
+    // Mobile iframe controls
+    // ------------------------
+    document.getElementById('openMobileIframe').addEventListener('click', ()=>{
+      document.getElementById('mobileFull').style.display='flex';
+      document.body.style.overflow='hidden';
+    })
+    document.getElementById('closeMobile').addEventListener('click', ()=>{
+      document.getElementById('mobileFull').style.display='none';
+      document.body.style.overflow='auto';
+    })
+    document.getElementById('mobileOpenInNew').addEventListener('click', ()=>{
+      window.open(document.getElementById('mobileIframe').src,'_blank');
+    })
+
+    // ------------------------
+    // Theme toggle
+    // ------------------------
+    function setTheme(t){
+      document.getElementById('app').setAttribute('data-theme', t);
+      localStorage.setItem('sf_theme', t);
+      document.getElementById('toggleTheme').querySelector('.muted').innerText = t==='light' ? 'Light':'Dark';
+    }
+    document.getElementById('toggleTheme').addEventListener('click', ()=>{
+      const cur = document.body.getAttribute('data-theme') === 'light' ? 'dark':'light';
+      document.body.setAttribute('data-theme', cur);
+      setTheme(cur);
+    })
+    document.getElementById('mobileToggleTheme').addEventListener('click', ()=>{
+      const cur = document.body.getAttribute('data-theme') === 'light' ? 'dark':'light';
+      setTheme(cur);
+    })
+
+    // initialize theme
+    (function(){
+      const saved = localStorage.getItem('sf_theme') || 'dark';
+      document.body.setAttribute('data-theme', saved);
+    })();
+
+    // ------------------------
+    // Parallax effect
+    // ------------------------
+    const parallax = document.getElementById('parallax');
+    window.addEventListener('scroll', ()=>{
+      const y = window.scrollY / 3;
+      parallax.style.transform = `translateY(${y}px)`;
+    })
+
+    // ------------------------
+    // Save & Load local storage
+    // ------------------------
+    function saveLocal(){
+      localStorage.setItem('sf_rows', JSON.stringify(rows));
+    }
+    function loadLocal(){
+      try{
+        const r = JSON.parse(localStorage.getItem('sf_rows')||'null');
+        if(Array.isArray(r) && r.length) rows = r;
+        else rows = SAMPLE.slice(0,3);
+      }catch(e){rows = SAMPLE.slice(0,3)}
+    }
+
+    // ------------------------
+    // Simple overdue mark (mark as paid)
+    // ------------------------
+    document.getElementById('markDone').addEventListener('click', ()=>{
+      rows = rows.map(r => ({...r, weekly: r.weekly || 500}));
+      recalc();saveLocal();
+    })
+
+    // ------------------------
+    // Save settings
+    // ------------------------
+    document.getElementById('saveSettings').addEventListener('click', ()=>{
+      localStorage.setItem('sf_defaultAmt', document.getElementById('defaultAmt').value);
+      alert('Settings saved locally');
+    })
+
+    document.getElementById('resetSettings').addEventListener('click', ()=>{
+      document.getElementById('defaultAmt').value = 500;
+      alert('Reset to defaults');
+    })
+
+    // ------------------------
+    // Go to sheet (scroll)
+    // ------------------------
+    document.getElementById('goToSheet').addEventListener('click', ()=>{
+      document.getElementById('sheetCard').scrollIntoView({behavior:'smooth'});
+    })
+
+    // Toggle iframe fit: simulate a framed fullscreen state on desktop
+    let framed = false;
+    document.getElementById('toggleIframeFit').addEventListener('click', ()=>{
+      framed = !framed;
+      const card = document.getElementById('sheetCard');
+      if(framed){
+        card.style.position='fixed';card.style.inset='0';card.style.margin='0';card.style.zIndex=9998;card.style.borderRadius='0';card.style.height='100vh';
+      }else{
+        card.style.position='static';card.style.height='520px';card.style.borderRadius='10px';
+      }
+    })
+
+    // ------------------------
+    // Init
+    // ------------------------
+    function init(){
+      loadLocal();
+      renderNotes();
+      recalc();
+
+      // attach add note
+      document.getElementById('addNote').addEventListener('click', addNote);
+
+      // auto-save periodically
+      setInterval(saveLocal, 4000);
+    }
+
+    init();
+
+    // expose small API for debugging
+    window.sf = {rows, recalc, renderTable, saveLocal};
+
+  </script>
 </body>
 </html>
